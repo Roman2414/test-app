@@ -1,12 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatKickoff, formatScore, formatStatus, statusColor } from '../formatMatch';
 import type { Club, Match } from '../types';
+import { FavoriteButton } from './FavoriteButton';
 
 type Props = {
   match: Match;
+  favorite: boolean;
+  onToggleFavorite: () => void;
 };
 
-export function MatchCard({ match }: Props) {
+export function MatchCard({ match, favorite, onToggleFavorite }: Props) {
   const score = formatScore(match.score);
 
   return (
@@ -15,6 +18,7 @@ export function MatchCard({ match }: Props) {
         <ClubName club={match.home} align="left" />
         <Text style={score ? styles.score : styles.versus}>{score ?? 'vs'}</Text>
         <ClubName club={match.away} align="right" />
+        <FavoriteButton active={favorite} onPress={onToggleFavorite} />
       </View>
       <View style={styles.meta}>
         <Text style={styles.kickoff}>{formatKickoff(match.startsAt)}</Text>

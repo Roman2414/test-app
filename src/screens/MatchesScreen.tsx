@@ -10,11 +10,13 @@ import {
 } from 'react-native';
 import { MatchCard } from '../components/MatchCard';
 import { UpdatedAgo } from '../components/UpdatedAgo';
+import { useFavorites } from '../hooks/useFavorites';
 import { useMatches } from '../hooks/useMatches';
 import { emptyMessage, MATCH_FILTERS, matchesFilter, type MatchFilter } from '../matchFilters';
 
 export function MatchesScreen() {
   const { matches, round, phase, error, refreshing, updatedAt, refresh } = useMatches();
+  const { isFavorite, toggle } = useFavorites();
   const [filter, setFilter] = useState<MatchFilter>('all');
   const visible = matches.filter((match) => matchesFilter(match, filter));
 
@@ -89,7 +91,13 @@ export function MatchesScreen() {
           keyExtractor={(item) => item.id}
           style={styles.listView}
           contentContainerStyle={visible.length === 0 ? styles.emptyList : styles.list}
-          renderItem={({ item }) => <MatchCard match={item} />}
+          renderItem={({ item }) => (
+            <MatchCard
+              match={item}
+              favorite={isFavorite(item.id)}
+              onToggleFavorite={() => toggle(item.id)}
+            />
+          )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
           ListEmptyComponent={<Text style={styles.message}>{emptyMessage(filter, matches.length)}</Text>}
         />
