@@ -6,19 +6,21 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { MatchCard } from '../components/MatchCard';
 import { UpdatedAgo } from '../components/UpdatedAgo';
 import { useFavorites } from '../hooks/useFavorites';
 import { useMatches } from '../hooks/useMatches';
-import { emptyMessage, MATCH_FILTERS, matchesFilter, type MatchFilter } from '../matchFilters';
+import { emptyMessage, MATCH_FILTERS, type MatchFilter, visibleMatches } from '../matchFilters';
 
 export function MatchesScreen() {
   const { matches, round, phase, error, refreshing, updatedAt, refresh } = useMatches();
   const { isFavorite, toggle } = useFavorites();
   const [filter, setFilter] = useState<MatchFilter>('all');
-  const visible = matches.filter((match) => matchesFilter(match, filter));
+  const [query, setQuery] = useState('');
+  const visible = visibleMatches(matches, filter, query);
 
   return (
     <View style={styles.screen}>
@@ -60,6 +62,16 @@ export function MatchesScreen() {
                 );
               })}
             </View>
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Поиск по клубу"
+              placeholderTextColor="#9ca3af"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.search}
+              accessibilityLabel="Поиск по клубу"
+            />
           </>
         ) : null}
       </View>
@@ -99,7 +111,10 @@ export function MatchesScreen() {
             />
           )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
-          ListEmptyComponent={<Text style={styles.message}>{emptyMessage(filter, matches.length)}</Text>}
+          ListEmptyComponent={
+            <Text style={styles.message}>{emptyMessage(filter, query, matches.length)}</Text>
+          }
+          keyboardShouldPersistTaps="handled"
         />
       ) : null}
     </View>
@@ -168,6 +183,17 @@ const styles = StyleSheet.create({
   chipTextSelected: {
     color: '#fff',
     fontWeight: '600',
+  },
+  search: {
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    color: '#111827',
   },
   listView: {
     flex: 1,

@@ -18,8 +18,22 @@ export function matchesFilter(match: Match, filter: MatchFilter): boolean {
   return UPCOMING_STATUSES.has(match.status);
 }
 
-export function emptyMessage(filter: MatchFilter, total: number): string {
+export function visibleMatches(matches: Match[], filter: MatchFilter, query: string): Match[] {
+  const needle = query.trim().toLocaleLowerCase('ru');
+
+  return matches.filter((match) => {
+    if (!matchesFilter(match, filter)) return false;
+    if (!needle) return true;
+
+    const home = match.home.name.toLocaleLowerCase('ru');
+    const away = match.away.name.toLocaleLowerCase('ru');
+    return home.includes(needle) || away.includes(needle);
+  });
+}
+
+export function emptyMessage(filter: MatchFilter, query: string, total: number): string {
   if (total === 0) return 'Матчей тура пока нет';
+  if (query.trim()) return 'Нет матчей с таким клубом';
   if (filter === 'upcoming') return 'Предстоящих матчей нет';
   if (filter === 'finished') return 'Завершённых матчей нет';
   return 'Матчей нет';
