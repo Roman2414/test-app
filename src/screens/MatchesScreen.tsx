@@ -1,11 +1,20 @@
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { MatchCard } from '../components/MatchCard';
+import { UpdatedAgo } from '../components/UpdatedAgo';
 import { useMatches } from '../hooks/useMatches';
 import { emptyMessage, MATCH_FILTERS, matchesFilter, type MatchFilter } from '../matchFilters';
 
 export function MatchesScreen() {
-  const { matches, round, phase, error, refresh } = useMatches();
+  const { matches, round, phase, error, refreshing, updatedAt, refresh } = useMatches();
   const [filter, setFilter] = useState<MatchFilter>('all');
   const visible = matches.filter((match) => matchesFilter(match, filter));
 
@@ -15,22 +24,41 @@ export function MatchesScreen() {
         <Text style={styles.title}>Матчи тура</Text>
         {round != null ? <Text style={styles.subtitle}>Тур {round}</Text> : null}
         {phase === 'ready' ? (
-          <View style={styles.filters}>
-            {MATCH_FILTERS.map((item) => {
-              const selected = item.id === filter;
-              return (
-                <Pressable
-                  key={item.id}
-                  onPress={() => setFilter(item.id)}
-                  style={[styles.chip, selected && styles.chipSelected]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                >
-                  <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{item.label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <>
+            <View style={styles.toolbar}>
+              <Pressable
+                onPress={() => void refresh()}
+                disabled={refreshing}
+                style={({ pressed }) => [styles.retry, pressed && styles.pressed, refreshing && styles.disabled]}
+                accessibilityRole="button"
+                accessibilityLabel="Обновить"
+              >
+                <Text style={styles.retryText}>{refreshing ? 'Обновляем…' : 'Обновить'}</Text>
+              </Pressable>
+              {updatedAt ? <UpdatedAgo since={updatedAt} /> : null}
+            </View>
+            {error ? (
+              <View style={styles.banner}>
+                <Text style={styles.bannerText}>{error}</Text>
+              </View>
+            ) : null}
+            <View style={styles.filters}>
+              {MATCH_FILTERS.map((item) => {
+                const selected = item.id === filter;
+                return (
+                  <Pressable
+                    key={item.id}
+                    onPress={() => setFilter(item.id)}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{item.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
         ) : null}
       </View>
 
@@ -62,6 +90,7 @@ export function MatchesScreen() {
           style={styles.listView}
           contentContainerStyle={visible.length === 0 ? styles.emptyList : styles.list}
           renderItem={({ item }) => <MatchCard match={item} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
           ListEmptyComponent={<Text style={styles.message}>{emptyMessage(filter, matches.length)}</Text>}
         />
       ) : null}
@@ -87,6 +116,27 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 14,
     color: '#6b7280',
+  },
+  toolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 12,
+  },
+  banner: {
+    marginTop: 12,
+    backgroundColor: '#fee2e2',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  bannerText: {
+    color: '#991b1b',
+    fontSize: 14,
+  },
+  disabled: {
+    opacity: 0.6,
   },
   filters: {
     flexDirection: 'row',
